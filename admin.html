@@ -181,6 +181,15 @@
         }
 
         function loadAdminData() {
+            // ჩაამატე loadAdminData-ს დასაწყისში
+if (Notification.permission !== "granted") {
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            console.log("ნოტიფიკაციები ჩაირთო!");
+        }
+    });
+}
+
             const ordersLiveRef = rQuery(ref(rtdb, 'orders_live'), limitToLast(1));
             onChildAdded(ordersLiveRef, (snap) => {
                 const order = snap.val();
