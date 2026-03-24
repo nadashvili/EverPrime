@@ -21,7 +21,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #000; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ff0000; }
         
-        /* სექციების მართვა */
         .admin-section { display: none; }
         .admin-section.active { display: block; }
         .nav-btn.active { background: #dc2626; color: white; border-color: #dc2626; }
@@ -44,7 +43,7 @@
         <div class="flex items-center gap-6 bg-white/5 p-3 px-6 rounded-full border border-white/10">
             <div id="user-stats" class="text-green-500 text-xs font-bold tracking-widest uppercase italic animate-pulse">კავშირი...</div>
             <div class="h-6 w-[1px] bg-white/10"></div>
-            <button onclick="location.href='index.html'" class="text-[10px] font-bold uppercase border border-white/20 px-4 py-1.5 hover:bg-white hover:text-black transition">Exit</button>
+            <button onclick="location.href='index.html'" class="text-[10px] font-bold uppercase border border-white/20 px-4 py-1.5 hover:bg-white hover:text-black transition text-white">Exit</button>
         </div>
     </header>
 
@@ -69,8 +68,7 @@
         <section id="orders-sec" class="admin-section active">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="font-sync text-xs text-red-600 italic uppercase tracking-[0.3em]">Recent Orders</h2>
-                <input id="order-search" type="text" placeholder="ძებნა (ავტორი)..." 
-                       class="bg-white/5 border border-white/10 p-2 text-[10px] outline-none focus:border-red-600 transition w-64 uppercase tracking-widest text-white">
+                <input id="order-search" type="text" placeholder="ძებნა..." class="bg-white/5 border border-white/10 p-2 text-[10px] outline-none focus:border-red-600 transition w-64 uppercase tracking-widest text-white">
             </div>
             <div id="orders-list" class="space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar"></div>
         </section>
@@ -97,257 +95,175 @@
 
         <section id="users-sec" class="admin-section">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h2 class="font-sync text-xs text-blue-500 italic uppercase tracking-[0.3em]">User Database</h2>
-                    <p class="text-[10px] text-gray-500 uppercase mt-1">მართე რეგისტრირებული მომხმარებლები</p>
-                </div>
-                <div class="relative w-full md:w-96">
-                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">search</span>
-                    <input id="user-db-search" type="text" placeholder="მოძებნე (ნომერი ან იმეილი)..." 
-                           class="w-full bg-white/5 border border-white/10 p-3 pl-10 text-[11px] outline-none focus:border-blue-500 transition uppercase tracking-widest text-white">
-                </div>
+                <h2 class="font-sync text-xs text-blue-500 italic uppercase tracking-[0.3em]">User Database</h2>
+                <input id="user-db-search" type="text" placeholder="მოძებნე..." class="bg-white/5 border border-white/10 p-3 text-[11px] outline-none focus:border-blue-500 transition text-white">
             </div>
-            <div id="users-db-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+            <div id="users-db-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
     </main>
 
-    <div id="prime-popup" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/90 backdrop-blur-md p-6">
-        <div class="bg-white text-black p-8 max-w-sm w-full text-center">
-            <p id="popup-text" class="font-bold uppercase mb-6"></p>
-            <div class="flex gap-4">
-                <button id="popup-confirm" class="flex-1 bg-black text-white p-3 font-bold uppercase text-xs">დიახ</button>
-                <button id="popup-close" class="flex-1 border border-black p-3 font-bold uppercase text-xs">არა</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         function showSection(sectionId, btn) {
-            // ყველა სექციის დამალვა
             document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-            // არჩეულის გამოჩენა
             document.getElementById(sectionId).classList.add('active');
-            
-            // ღილაკების სტილის განახლება
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
     </script>
-    <script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, collection, onSnapshot, query, doc, getDoc, deleteDoc, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
-import { getDatabase, ref, onValue, onChildAdded, limitToLast, query as rQuery } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyAtQfNnv6qDbnbHzZ-XE8pIylLRYg5UTbg",
-    authDomain: "everprime-b80dd.firebaseapp.com",
-    projectId: "everprime-b80dd",
-    storageBucket: "everprime-b80dd.firebasestorage.app",
-    messagingSenderId: "527537324294",
-    appId: "1:527537324294:web:de1a4e25057389bc6e9e87",
-    databaseURL: "https://everprime-b80dd-default-rtdb.europe-west1.firebasedatabase.app"
-};
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, doc, getDoc, deleteDoc, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getDatabase, ref, onValue, onChildAdded, limitToLast, query as rQuery } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const rtdb = getDatabase(app);
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtQfNnv6qDbnbHzZ-XE8pIylLRYg5UTbg",
+            authDomain: "everprime-b80dd.firebaseapp.com",
+            projectId: "everprime-b80dd",
+            storageBucket: "everprime-b80dd.firebasestorage.app",
+            messagingSenderId: "527537324294",
+            appId: "1:527537324294:web:de1a4e25057389bc6e9e87",
+            databaseURL: "https://everprime-b80dd-default-rtdb.europe-west1.firebasedatabase.app"
+        };
 
-let allOrders = [];
-let allRegisteredUsers = []; // ახალი მასივი მომხმარებლებისთვის
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const rtdb = getDatabase(app);
 
-// --- განგაშის ფუნქცია ---
-function triggerAlarm(data) {
-    const overlay = document.getElementById('alarm-overlay');
-    const details = document.getElementById('alarm-details');
-    if (!overlay || !details) return;
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.2, 0.4].forEach(delay => {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + delay);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime + delay);
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start(audioCtx.currentTime + delay);
-            oscillator.stop(audioCtx.currentTime + delay + 0.1);
-        });
-    } catch (e) { console.log("Sound blocked"); }
-    details.innerHTML = `
-        <div class="grid grid-cols-1 gap-4 uppercase font-sync italic text-white">
-            <div class="border-b border-white/20 pb-2">
-                <span class="text-red-600 text-[10px]">პროდუქტი</span>
-                <p class="text-2xl font-black">${data.product || 'ახალი შეკვეთა'}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><span class="text-red-600 text-[10px]">ტელეფონი</span><p class="text-lg text-green-500">${data.phone || '---'}</p></div>
-                <div></div>
-            </div>
-        </div>`;
-    overlay.classList.add('active');
-    setTimeout(() => { overlay.classList.remove('active'); }, 3000);
-}
+        // --- TELEGRAM NOTIFICATION (WITH ADDRESS) ---
+        async function sendTelegramNotification(orderData) {
+            const botToken = '8023573505:AAFRsExFNpP2d2YpQB4nGDlB-ZEFo3u7wxE';
+            const chatId = '-1003731895302';
+            
+            const message = `🚀 *EverPrime: ახალი შეკვეთა!* \n\n` +
+                            `📦 *პროდუქტი:* ${orderData.product || 'N/A'}\n` +
+                            `📞 *ტელეფონი:* ${orderData.phone || 'N/A'}\n` +
+                            `📧 *Email:* ${orderData.email || 'N/A'}\n` +
+                            `📍 *მისამართი:* ${orderData.address || 'მისამართი არაა მითითებული'}\n` +
+                            `⏰ *დრო:* ${new Date().toLocaleString('ka-GE')}`;
 
-// --- ადმინ მონაცემების ჩატვირთვა ---
-function loadAdminData() {
-    // 1. Live შეკვეთების განგაში
-    const ordersLiveRef = rQuery(ref(rtdb, 'orders_live'), limitToLast(1));
-    const alarmToggle = document.getElementById('alarm-toggle');
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
 
-    onChildAdded(ordersLiveRef, (snap) => {
-        const order = snap.val();
-        const isNew = order.timestamp && (Date.now() - order.timestamp < 10000);
-        if (isNew && alarmToggle && alarmToggle.checked) {
-            triggerAlarm(order);
+            try {
+                await fetch(url);
+                console.log("Telegram notification sent!");
+            } catch (e) {
+                console.error("Telegram Error:", e);
+            }
         }
-    });
 
-    // 2. შეკვეთების სია
-    onSnapshot(query(collection(db, "orders"), orderBy("time", "desc")), snap => {
-        allOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderOrders(allOrders);
-    });
+        function triggerAlarm(data) {
+            const overlay = document.getElementById('alarm-overlay');
+            const details = document.getElementById('alarm-details');
+            if (!overlay || !details) return;
+            
+            details.innerHTML = `
+                <div class="grid grid-cols-1 gap-4 uppercase font-sync italic text-white">
+                    <div class="border-b border-white/20 pb-2">
+                        <span class="text-red-600 text-[10px]">პროდუქტი</span>
+                        <p class="text-2xl font-black">${data.product || 'ახალი შეკვეთა'}</p>
+                    </div>
+                    <div><span class="text-red-600 text-[10px]">მისამართი</span><p class="text-lg text-white">${data.address || 'N/A'}</p></div>
+                </div>`;
+            
+            overlay.classList.add('active');
+            setTimeout(() => { overlay.classList.remove('active'); }, 4000);
+        }
 
-    // 3. ონლაინ მომხმარებლების რაოდენობა
-    onValue(ref(rtdb, 'online_users'), snap => {
-        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-        document.getElementById('user-stats').innerHTML = `● LIVE USERS: ${count}`;
-    });
+        function loadAdminData() {
+            // Live შეკვეთების მოსმენა
+            const ordersLiveRef = rQuery(ref(rtdb, 'orders_live'), limitToLast(1));
+            const alarmToggle = document.getElementById('alarm-toggle');
 
-    // 4. პროდუქტების სია (Inventory)
-    onSnapshot(collection(db, "products"), snap => {
-        const list = document.getElementById('inventory-list');
-        list.innerHTML = '';
-        snap.forEach(d => {
-            const p = d.data();
-            list.innerHTML += `<div class="p-4 bg-black/40 border border-white/5 flex justify-between items-center group">
-                <span class="text-sm font-bold uppercase italic text-gray-400">${p.name} - ${p.price}₾</span>
-                <button onclick="window.delProd('${d.id}')" class="text-[10px] text-red-900 hover:text-red-600 uppercase transition">Delete</button>
-            </div>`;
+            onChildAdded(ordersLiveRef, (snap) => {
+                const order = snap.val();
+                const isNew = order.timestamp && (Date.now() - order.timestamp < 10000);
+                if (isNew) {
+                    if (alarmToggle && alarmToggle.checked) triggerAlarm(order);
+                    sendTelegramNotification(order);
+                }
+            });
+
+            // შეკვეთების სია
+            onSnapshot(query(collection(db, "orders"), orderBy("time", "desc")), snap => {
+                const list = document.getElementById('orders-list');
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const o = doc.data();
+                    const date = o.time?.toDate() ? o.time.toDate().toLocaleString('ka-GE') : 'ახლახანს';
+                    list.innerHTML += `
+                        <div class="p-4 bg-white/5 border-l-4 border-red-600 flex justify-between items-center mb-2">
+                            <div>
+                                <p class="text-red-600 font-bold text-[12px] uppercase italic">${date}</p>
+                                <h4 class="font-bold text-white uppercase">${o.product}</h4>
+                                <p class="text-[10px] text-gray-400 font-mono">${o.phone || 'N/A'} | ${o.address || 'N/A'}</p>
+                            </div>
+                            <button onclick="window.delOrder('${doc.id}')" class="text-gray-600 hover:text-red-600">
+                                <span class="material-icons">delete_sweep</span>
+                            </button>
+                        </div>`;
+                });
+            });
+
+            // ონლაინ მომხმარებლები
+            onValue(ref(rtdb, 'online_users'), snap => {
+                const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+                document.getElementById('user-stats').innerHTML = `● LIVE USERS: ${count}`;
+            });
+
+            // პროდუქტების სია (Inventory)
+            onSnapshot(collection(db, "products"), snap => {
+                const list = document.getElementById('inventory-list');
+                list.innerHTML = '';
+                snap.forEach(d => {
+                    const p = d.data();
+                    list.innerHTML += `<div class="p-4 bg-black/40 border border-white/5 flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-400 uppercase italic">${p.name} - ${p.price}₾</span>
+                        <button onclick="window.delProd('${d.id}')" class="text-[10px] text-red-600 uppercase">Delete</button>
+                    </div>`;
+                });
+            });
+
+            // მომხმარებლების სია
+            onSnapshot(collection(db, "users"), snap => {
+                const list = document.getElementById('users-db-list');
+                list.innerHTML = '';
+                snap.forEach(u => {
+                    const data = u.data();
+                    list.innerHTML += `<div class="p-4 bg-white/5 border border-white/5 flex justify-between items-center hover:border-blue-500/30">
+                        <div class="overflow-hidden">
+                            <p class="text-blue-500 font-bold text-[11px] truncate uppercase">${data.email || 'No Email'}</p>
+                            <p class="text-[14px] text-white font-mono">${data.phone || '---'}</p>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const u = await getDoc(doc(db, "users", user.uid));
+                if (u.exists() && u.data().role === 'admin') loadAdminData();
+                else window.location.href = "index.html";
+            } else window.location.href = "index.html";
         });
-    });
 
-    // 5. მომხმარებლების სრული ბაზა (ახალი ფუნქციონალი)
-    initUserDatabase();
-}
-
-// --- მომხმარებლების ბაზის მართვა ---
-function initUserDatabase() {
-    const userSearchInput = document.getElementById('user-db-search');
-
-    onSnapshot(collection(db, "users"), snap => {
-        allRegisteredUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderUsers(allRegisteredUsers);
-    });
-
-    if (userSearchInput) {
-        userSearchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = allRegisteredUsers.filter(u => 
-                (u.email && u.email.toLowerCase().includes(term)) || 
-                (u.phone && u.phone.includes(term))
-            );
-            renderUsers(filtered);
-        });
-    }
-}
-
-// --- რენდერ ფუნქციები ---
-function renderOrders(ordersArray) {
-    const list = document.getElementById('orders-list');
-    const orderSearch = document.getElementById('order-search');
-    
-    // შეკვეთების ძებნის ფილტრი
-    orderSearch.oninput = (e) => {
-        const val = e.target.value.toLowerCase();
-        const filtered = ordersArray.filter(o => 
-            (o.phone && o.phone.includes(val)) || 
-            (o.email && o.email.toLowerCase().includes(val))
-        );
-        displayOrders(filtered);
-    };
-
-    displayOrders(ordersArray);
-}
-
-function displayOrders(arr) {
-    const list = document.getElementById('orders-list');
-    if (!list) return;
-    list.innerHTML = '';
-    arr.forEach(o => {
-        const date = o.time?.toDate() ? o.time.toDate().toLocaleString('ka-GE') : 'ახლახანს';
-        list.innerHTML += `
-            <div class="p-4 bg-white/5 border-l-4 border-red-600 flex justify-between items-center mb-2 group hover:bg-white/10 transition">
-                <div>
-                    <p class="text-red-600 font-bold text-[15px] uppercase italic">${date}</p>
-                    <h4 class="font-bold text-md uppercase text-white">${o.product}</h4>
-                    <p class="text-[10px] text-gray-400 font-mono">${o.phone || 'N/A'} | ${o.email}</p>
-                </div>
-                <button onclick="window.delOrder('${o.id}')" class="text-gray-600 hover:text-red-600 transition">
-                    <span class="material-icons">delete_sweep</span>
-                </button>
-            </div>`;
-    });
-}
-
-function renderUsers(usersArray) {
-    const list = document.getElementById('users-db-list');
-    if (!list) return;
-    list.innerHTML = '';
-    usersArray.forEach(u => {
-        list.innerHTML += `
-            <div class="p-4 bg-white/5 border border-white/5 flex justify-between items-center hover:border-blue-500/30 transition">
-                <div class="overflow-hidden">
-                    <p class="text-blue-500 font-bold text-[11px] uppercase truncate">${u.email || 'No Email'}</p>
-                    <p class="text-[14px] text-white font-mono tracking-tighter">${u.phone || '---'}</p>
-                    <p class="text-[9px] text-gray-500 uppercase italic truncate">${u.address || 'მისამართი არაა'}</p>
-                </div>
-                <button onclick="window.delUserAccount('${u.id}', '${u.email}')" class="ml-4 text-gray-700 hover:text-red-600 transition">
-                    <span class="material-icons text-lg">person_remove</span>
-                </button>
-            </div>`;
-    });
-}
-
-// --- ავტორიზაციის შემოწმება ---
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const u = await getDoc(doc(db, "users", user.uid));
-        if (u.exists() && u.data().role === 'admin') {
-            loadAdminData();
-        } else { window.location.href = "index.html"; }
-    } else { window.location.href = "index.html"; }
-});
-
-// --- გლობალური ფუნქციები (window) ---
-window.delOrder = async (id) => { if(confirm("წავშალოთ შეკვეთა?")) await deleteDoc(doc(db, "orders", id)); };
-window.delProd = async (id) => { if(confirm("წავშალოთ პროდუქტი?")) await deleteDoc(doc(db, "products", id)); };
-
-window.delUserAccount = async (id, email) => { 
-    if(confirm(`ნამდვილად გსურთ მომხმარებლის წაშლა?\n(${email})`)) {
-        await deleteDoc(doc(db, "users", id));
-    }
-};
-
-window.uploadProduct = async () => {
-    const name = document.getElementById('p-name').value;
-    const price = document.getElementById('p-price').value;
-    const img = document.getElementById('p-img').value;
-    const desc = document.getElementById('p-desc').value;
-
-    if(!name || !price) return alert("შეავსეთ ველები!");
-
-    try {
-        await addDoc(collection(db, "products"), { name, price, img, desc, createdAt: Date.now() });
-        alert("პროდუქტი დამატებულია!");
-        document.getElementById('p-name').value = '';
-        document.getElementById('p-price').value = '';
-    } catch (e) { alert("შეცდომა!"); }
-};
-
-window.testAlarm = () => triggerAlarm({ product: "ტესტური პროდუქტი", phone: "599 00 00 00", email: "test@mail.com" });
-</script>
+        window.delOrder = async (id) => { if(confirm("წავშალოთ შეკვეთა?")) await deleteDoc(doc(db, "orders", id)); };
+        window.delProd = async (id) => { if(confirm("წავშალოთ პროდუქტი?")) await deleteDoc(doc(db, "products", id)); };
+        
+        window.uploadProduct = async () => {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const img = document.getElementById('p-img').value;
+            const desc = document.getElementById('p-desc').value;
+            if(!name || !price) return alert("შეავსეთ სახელი და ფასი!");
+            try {
+                await addDoc(collection(db, "products"), { name, price, img, desc, createdAt: Date.now() });
+                alert("პროდუქტი წარმატებით დაემატა!");
+            } catch (e) { alert("შეცდომა ატვირთვისას!"); }
+        };
+    </script>
 </body>
 </html>
