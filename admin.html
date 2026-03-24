@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>EverPrime | Command Center</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    @font-face {
+    font-family: 'GugeshashviliBold'; /* დაარქვით ნებისმიერი სახელი */
+    src: url('gugeshashvili_8_mthavruli_bold-52145488073.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+        .admin-input { width: 100%; padding: 14px; background: black; border: 1px solid #222; margin-bottom: 12px; outline: none; font-size: 10px; font-family: 'GugeshashviliBold';color: white; }
+        .admin-input:focus { border-color: #FF0000; }
+    </style>
+</head>
+<body class="bg-[#050505] text-white p-8">
+    <header class="flex justify-between items-center border-b border-red-600 pb-6 mb-10">
+        <h1 class="font-['Syncopate'] text-2xl font-bold italic uppercase">Admin <span class="text-red-600">Panel</span></h1>
+        <a href="index.html" class="text-[10px] border border-white/20 px-4 py-2 hover:bg-white hover:text-black">გასვლა</a>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <section class="lg:col-span-12 bg-[#0F0F0F] p-6 border border-blue-600/20">
+            <h3 class="text-blue-500 font-['Syncopate'] text-[10px] mb-4">მომხმატებლის ძიება</h3>
+            <div class="flex gap-4">
+                <input id="search-phone-input" type="text" placeholder="ტელეფონის ნომერი" class="admin-input !mb-0">
+                <button onclick="searchUser()" class="bg-blue-600 px-8 font-bold text-[10px]">ძიება</button>
+            </div>
+            <div id="user-result" class="hidden mt-4 p-4 bg-black text-[10px] border border-white/5 grid grid-cols-3"></div>
+        </section>
+
+        <section class="lg:col-span-4 bg-[#0F0F0F] p-6">
+            <h3 class="text-red-600 font-['Syncopate'] text-[10px] mb-6">პროდუქტის დადება</h3>
+            <input id="p-name" type="text" placeholder="სახელი" class="admin-input">
+            <input id="p-price" type="number" placeholder="ფასი" class="admin-input">
+            <input id="p-img" type="text" placeholder="ფოტოს ლინკ" class="admin-input">
+            <textarea id="p-desc" placeholder="აღწერა" class="admin-input h-32 resize-none"></textarea>
+            <button onclick="uploadProduct()" class="w-full bg-red-600 py-4 font-bold text-[10px]">ატვირთვა</button>
+        </section>
+
+        <section class="lg:col-span-8 space-y-8">
+            <div class="bg-[#0F0F0F] p-6">
+                <h3 class="font-['Syncopate'] text-[10px] mb-4">პროდუქტები</h3>
+                <div id="inventory-list" class="grid gap-2"></div>
+            </div>
+            <div class="bg-[#0F0F0F] p-6">
+                <h3 class="font-['Syncopate'] text-[10px] mb-4 text-green-500">შეკვეთები</h3>
+                <div id="orders-list" class="grid gap-2"></div>
+            </div>
+        </section>
+    </div>
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
