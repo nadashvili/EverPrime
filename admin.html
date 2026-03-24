@@ -80,7 +80,7 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">სურათის ლინკი (URL)</label>
-                        <input id="p-img" type="text" placeholder="https://..." class="w-full p-3 text-sm">
+                        <input id="p-image" type="text" placeholder="https://..." class="w-full p-3 text-sm">
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">აღწერა</label>
@@ -176,7 +176,7 @@
                     const p = d.data();
                     list.innerHTML += `<div class="admin-card p-4 flex justify-between items-center border border-white/5">
                         <div class="flex items-center gap-3">
-                            <img src="${p.img || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover border border-white/10">
+                            <img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover border border-white/10">
                             <div><p class="text-xs font-bold text-white uppercase">${p.name}</p><p class="text-[10px] text-red-500">${p.price}₾</p></div>
                         </div>
                         <button onclick="window.delDoc('products', '${d.id}')" class="text-[10px] text-red-600 font-black hover:underline uppercase">წაშლა</button>
