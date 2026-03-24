@@ -133,7 +133,8 @@
             btn.classList.add('active');
         }
     </script>
-    <script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getFirestore, collection, onSnapshot, query, doc, getDoc, deleteDoc, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { getDatabase, ref, onValue, onChildAdded, limitToLast, query as rQuery } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
@@ -154,71 +155,92 @@ const db = getFirestore(app);
 const rtdb = getDatabase(app);
 
 let allOrders = [];
-let allRegisteredUsers = []; // ახალი მასივი მომხმარებლებისთვის
+let allRegisteredUsers = [];
 
-// --- განგაშის ფუნქცია ---
+// ხმის ობიექტი (შეგიძლია შეცვალო ლინკი შენი mp3-ით)
+const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+// ნოტიფიკაციის მოთხოვნა გვერდის ჩატვირთვისას
+if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+}
+
+// --- განგაშის მთავარი ფუნქცია ---
 function triggerAlarm(data) {
     const overlay = document.getElementById('alarm-overlay');
     const details = document.getElementById('alarm-details');
-    if (!overlay || !details) return;
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.2, 0.4].forEach(delay => {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + delay);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime + delay);
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start(audioCtx.currentTime + delay);
-            oscillator.stop(audioCtx.currentTime + delay + 0.1);
+    const alarmToggle = document.getElementById('alarm-toggle');
+
+    // თუ ჩამრთველი გამორთულია, არაფერი ქნას
+    if (!alarmToggle || !alarmToggle.checked) return;
+
+    // 1. ხმის დაკვრა (მუშაობს ფონურ რეჟიმშიც)
+    alarmSound.currentTime = 0;
+    alarmSound.play().catch(e => console.log("ხმის დაკვრა დაიბლოკა. საჭიროა გვერდზე ერთხელ დაწკაპუნება."));
+
+    // 2. ბრაუზერის ნოტიფიკაცია (თუ ტაბი ჩაკეცილია)
+    if (Notification.permission === "granted") {
+        new Notification("EverPrime: ახალი შეკვეთა!", {
+            body: `პროდუქტი: ${data.product || 'უცნობი'}`,
+            icon: 'https://cdn-icons-png.flaticon.com/512/595/595067.png'
         });
-    } catch (e) { console.log("Sound blocked"); }
-    details.innerHTML = `
-        <div class="grid grid-cols-1 gap-4 uppercase font-sync italic text-white">
-            <div class="border-b border-white/20 pb-2">
-                <span class="text-red-600 text-[10px]">პროდუქტი</span>
-                <p class="text-2xl font-black">${data.product || 'ახალი შეკვეთა'}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><span class="text-red-600 text-[10px]">ტელეფონი</span><p class="text-lg text-green-500">${data.phone || '---'}</p></div>
-                <div></div>
-            </div>
-        </div>`;
-    overlay.classList.add('active');
-    setTimeout(() => { overlay.classList.remove('active'); }, 3000);
+    }
+
+    // 3. ვიზუალური ეფექტი ეკრანზე
+    if (overlay && details) {
+        details.innerHTML = `
+            <div class="grid grid-cols-1 gap-4 uppercase font-sync italic text-white">
+                <div class="border-b border-white/20 pb-2">
+                    <span class="text-red-600 text-[10px]">პროდუქტი</span>
+                    <p class="text-2xl font-black">${data.product || 'ახალი შეკვეთა'}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><span class="text-red-600 text-[10px]">ტელეფონი</span><p class="text-lg text-green-500">${data.phone || '---'}</p></div>
+                </div>
+            </div>`;
+        
+        overlay.classList.add('active');
+        
+        // მობილურის ვიბრაცია
+        if ("vibrate" in navigator) navigator.vibrate([500, 110, 500]);
+
+        setTimeout(() => { 
+            overlay.classList.remove('active'); 
+        }, 8000); // 8 წამში გაქრეს
+    }
 }
 
 // --- ადმინ მონაცემების ჩატვირთვა ---
 function loadAdminData() {
-    // 1. Live შეკვეთების განგაში
+    // 1. Live შეკვეთების მოსმენა (Realtime DB)
     const ordersLiveRef = rQuery(ref(rtdb, 'orders_live'), limitToLast(1));
-    const alarmToggle = document.getElementById('alarm-toggle');
-
+    
     onChildAdded(ordersLiveRef, (snap) => {
         const order = snap.val();
-        const isNew = order.timestamp && (Date.now() - order.timestamp < 10000);
-        if (isNew && alarmToggle && alarmToggle.checked) {
+        // ვამოწმებთ, რომ შეკვეთა ნამდვილად ახალია (ბოლო 15 წამის)
+        const isNew = order.timestamp && (Date.now() - order.timestamp < 15000);
+        if (isNew) {
             triggerAlarm(order);
         }
     });
 
-    // 2. შეკვეთების სია
+    // 2. შეკვეთების სია (Firestore)
     onSnapshot(query(collection(db, "orders"), orderBy("time", "desc")), snap => {
         allOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderOrders(allOrders);
     });
 
-    // 3. ონლაინ მომხმარებლების რაოდენობა
+    // 3. ონლაინ მომხმარებლები
     onValue(ref(rtdb, 'online_users'), snap => {
         const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-        document.getElementById('user-stats').innerHTML = `● LIVE USERS: ${count}`;
+        const statsEl = document.getElementById('user-stats');
+        if(statsEl) statsEl.innerHTML = `● LIVE USERS: ${count}`;
     });
 
-    // 4. პროდუქტების სია (Inventory)
+    // 4. ინვენტარი
     onSnapshot(collection(db, "products"), snap => {
         const list = document.getElementById('inventory-list');
+        if(!list) return;
         list.innerHTML = '';
         snap.forEach(d => {
             const p = d.data();
@@ -229,14 +251,11 @@ function loadAdminData() {
         });
     });
 
-    // 5. მომხმარებლების სრული ბაზა (ახალი ფუნქციონალი)
     initUserDatabase();
 }
 
-// --- მომხმარებლების ბაზის მართვა ---
 function initUserDatabase() {
     const userSearchInput = document.getElementById('user-db-search');
-
     onSnapshot(collection(db, "users"), snap => {
         allRegisteredUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderUsers(allRegisteredUsers);
@@ -258,8 +277,8 @@ function initUserDatabase() {
 function renderOrders(ordersArray) {
     const list = document.getElementById('orders-list');
     const orderSearch = document.getElementById('order-search');
-    
-    // შეკვეთების ძებნის ფილტრი
+    if (!list) return;
+
     orderSearch.oninput = (e) => {
         const val = e.target.value.toLowerCase();
         const filtered = ordersArray.filter(o => 
@@ -268,7 +287,6 @@ function renderOrders(ordersArray) {
         );
         displayOrders(filtered);
     };
-
     displayOrders(ordersArray);
 }
 
@@ -277,7 +295,7 @@ function displayOrders(arr) {
     if (!list) return;
     list.innerHTML = '';
     arr.forEach(o => {
-        const date = o.time?.toDate() ? o.time.toDate().toLocaleString('ka-GE') : 'ახლახანს';
+        const date = o.time?.toDate ? o.time.toDate().toLocaleString('ka-GE') : 'ახლახანს';
         list.innerHTML += `
             <div class="p-4 bg-white/5 border-l-4 border-red-600 flex justify-between items-center mb-2 group hover:bg-white/10 transition">
                 <div>
@@ -302,7 +320,6 @@ function renderUsers(usersArray) {
                 <div class="overflow-hidden">
                     <p class="text-blue-500 font-bold text-[11px] uppercase truncate">${u.email || 'No Email'}</p>
                     <p class="text-[14px] text-white font-mono tracking-tighter">${u.phone || '---'}</p>
-                    <p class="text-[9px] text-gray-500 uppercase italic truncate">${u.address || 'მისამართი არაა'}</p>
                 </div>
                 <button onclick="window.delUserAccount('${u.id}', '${u.email}')" class="ml-4 text-gray-700 hover:text-red-600 transition">
                     <span class="material-icons text-lg">person_remove</span>
@@ -311,7 +328,7 @@ function renderUsers(usersArray) {
     });
 }
 
-// --- ავტორიზაციის შემოწმება ---
+// --- ავტორიზაცია ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const u = await getDoc(doc(db, "users", user.uid));
@@ -321,14 +338,11 @@ onAuthStateChanged(auth, async (user) => {
     } else { window.location.href = "index.html"; }
 });
 
-// --- გლობალური ფუნქციები (window) ---
+// --- Window Functions ---
 window.delOrder = async (id) => { if(confirm("წავშალოთ შეკვეთა?")) await deleteDoc(doc(db, "orders", id)); };
 window.delProd = async (id) => { if(confirm("წავშალოთ პროდუქტი?")) await deleteDoc(doc(db, "products", id)); };
-
 window.delUserAccount = async (id, email) => { 
-    if(confirm(`ნამდვილად გსურთ მომხმარებლის წაშლა?\n(${email})`)) {
-        await deleteDoc(doc(db, "users", id));
-    }
+    if(confirm(`ნამდვილად გსურთ მომხმარებლის წაშლა?\n(${email})`)) await deleteDoc(doc(db, "users", id));
 };
 
 window.uploadProduct = async () => {
@@ -336,18 +350,17 @@ window.uploadProduct = async () => {
     const price = document.getElementById('p-price').value;
     const img = document.getElementById('p-img').value;
     const desc = document.getElementById('p-desc').value;
-
     if(!name || !price) return alert("შეავსეთ ველები!");
-
     try {
         await addDoc(collection(db, "products"), { name, price, img, desc, createdAt: Date.now() });
-        alert("პროდუქტი დამატებულია!");
+        alert("წარმატებით დაემატა!");
         document.getElementById('p-name').value = '';
         document.getElementById('p-price').value = '';
     } catch (e) { alert("შეცდომა!"); }
 };
 
-window.testAlarm = () => triggerAlarm({ product: "ტესტური პროდუქტი", phone: "599 00 00 00", email: "test@mail.com" });
+window.testAlarm = () => triggerAlarm({ product: "ტესტური შეკვეთა", phone: "5XX XX XX XX" });
 </script>
+
 </body>
 </html>
