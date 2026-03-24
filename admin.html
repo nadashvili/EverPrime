@@ -35,6 +35,7 @@
         <div class="mb-6 animate-bounce"><span class="material-icons text-9xl text-white">warning</span></div>
         <h2 class="font-sync text-5xl md:text-7xl font-black italic mb-8 text-white uppercase tracking-tighter">New Order</h2>
         <div id="alarm-details" class="bg-black p-10 border-4 border-white text-left max-w-2xl w-full"></div>
+        <button onclick="document.getElementById('alarm-overlay').classList.remove('active')" class="mt-8 bg-white text-black px-8 py-3 font-bold uppercase italic">გათიშვა</button>
     </div>
 
     <header class="flex flex-col md:flex-row justify-between items-center border-b border-red-600 pb-8 mb-8 gap-6">
@@ -120,42 +121,35 @@
 
         let allUsers = [];
 
-        // --- Telegram (Bypass CORS) ---
-        function sendTelegramNotification(orderData) {
-            const botToken = '8023573505:AAFRsExFNpP2d2YpQB4nGDlB-ZEFo3u7wxE';
-            const chatId = '-1003731895302';
-            const text = `🚀 EverPrime: ახალი შეკვეთა!\n\n📦 პროდუქტი: ${orderData.product || 'N/A'}\n📞 ტელეფონი: ${orderData.phone || 'N/A'}\n📧 Email: ${orderData.email || 'N/A'}\n📍 მისამართი: ${orderData.address || 'N/A'}\n⏰ დრო: ${new Date().toLocaleString('ka-GE')}`;
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`;
-            new Image().src = url;
-        }
-
         function triggerAlarm(data) {
             const overlay = document.getElementById('alarm-overlay');
             const details = document.getElementById('alarm-details');
             if (!overlay || !details) return;
-            details.innerHTML = `<p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p><p class="text-green-500 font-mono">მისამართი: ${data.address || 'N/A'}</p>`;
+            details.innerHTML = `<p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p><p class="text-green-500 font-mono italic">მისამართი: ${data.address || 'N/A'}</p><p class="text-white/50 text-xs mt-2 uppercase">ტელეფონი: ${data.phone || 'N/A'}</p>`;
             overlay.classList.add('active');
-            setTimeout(() => overlay.classList.remove('active'), 5000);
+            // ხმოვანი შეტყობინების დამატებაც შეიძლება აქ
         }
 
         function loadAdminData() {
-            // Live Realtime Monitoring
+            // Live Realtime Monitoring (მხოლოდ განგაშისთვის)
             onChildAdded(rQuery(ref(rtdb, 'orders_live'), limitToLast(1)), (snap) => {
                 const order = snap.val();
-                if (order.timestamp && (Date.now() - order.timestamp < 30000)) {
+                if (order.timestamp && (Date.now() - order.timestamp < 15000)) {
                     triggerAlarm(order);
-                    sendTelegramNotification(order);
                 }
             });
 
             // Orders List
-            onSnapshot(query(collection(db, "orders"), orderBy("time", "desc")), snap => {
+            onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), snap => {
                 const list = document.getElementById('orders-list');
                 list.innerHTML = '';
                 snap.forEach(d => {
                     const o = d.data();
                     list.innerHTML += `<div class="p-4 bg-white/5 border-l-4 border-red-600 mb-2 flex justify-between items-center group">
-                        <div><p class="text-white font-bold uppercase text-sm">${o.product}</p><p class="text-[10px] text-gray-500">${o.address || 'მისამართი არაა'}</p></div>
+                        <div>
+                            <p class="text-white font-bold uppercase text-sm">${o.product}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-tighter">${o.address || 'მისამართი არაა'} | ${o.phone || 'ნომერი არაა'}</p>
+                        </div>
                         <button onclick="window.delDoc('orders', '${d.id}')" class="text-gray-700 hover:text-red-600 transition"><span class="material-icons">delete</span></button>
                     </div>`;
                 });
