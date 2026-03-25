@@ -10,12 +10,8 @@ service cloud.firestore {
 
     // მომხმარებლების სექცია
     match /users/{userId} {
-      // მომხმარებელს შეუძლია თავისი მონაცემების ნახვა და შეცვლა
       allow read, update: if request.auth != null && request.auth.uid == userId;
-      // რეგისტრაცია
       allow create: if request.auth != null;
-      
-      // ადმინს შეუძლია ყველას წაკითხვა (სერჩისთვის) და წაშლა (ექაუნთის გაუქმებისთვის)
       allow read, delete: if isAdmin();
     }
 
@@ -25,10 +21,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // კატეგორიების სექცია (ეს აკლდა!)
+    match /categories/{catId} {
+      allow read: if true; // ყველამ უნდა დაინახოს ფილტრის ღილაკები
+      allow write: if isAdmin(); // მხოლოდ ადმინს შეუძლია დამატება/წაშლა
+    }
+
     // შეკვეთების სექცია
     match /orders/{orderId} {
       allow create: if request.auth != null;
-      // ადმინს შეუძლია წაკითხვა და წაშლა
       allow read, delete: if isAdmin();
     }
   }
