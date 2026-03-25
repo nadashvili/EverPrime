@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { getDatabase, ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -41,25 +41,30 @@ window.primeShow = (text, confirmMode = false, onConfirm = null) => {
 // --- ავტორიზაციის კონტროლი ---
 onAuthStateChanged(auth, async (user) => {
     const authSec = document.getElementById('auth-section');
-    const main = document.getElementById('main-content');
     const navUser = document.getElementById('nav-user-area');
+    
+    // პროდუქტები და კატეგორიები იტვირთება ყოველთვის
+    loadProducts();
+    loadCategories();
+
     if (user) {
         const userStatusRef = ref(rtdb, '/online_users/' + user.uid);
         set(userStatusRef, { email: user.email, last_active: Date.now() });
         onDisconnect(userStatusRef).remove();
-        authSec.classList.add('hidden');
-        main.classList.remove('hidden');
-        navUser.innerHTML = `<button onclick="window.toggleProfile()" class="nav-btn">${user.email.split('@')[0].toUpperCase()}</button>`;
+        
+        if(authSec) authSec.classList.add('hidden'); // ვმალავთ ფორმას თუ შესულია
+        navUser.innerHTML = `
+            <button onclick="window.toggleProfile()" class="nav-btn">${user.email.split('@')[0].toUpperCase()}</button>
+            <button onclick="window.handleLogout()" class="nav-btn text-red-600">გასვლა</button>
+        `;
         loadUserProfile(user.uid);
-        loadProducts();
-        loadCategories(); // კატეგორიების ჩატვირთვა
     } else {
-        authSec.classList.remove('hidden');
-        main.classList.add('hidden');
+        if(authSec) authSec.classList.remove('hidden'); // ვაჩვენებთ ფორმას თუ გამოსულია
+        navUser.innerHTML = `<button onclick="window.scrollToAuth()" class="nav-btn">შესვლა</button>`;
     }
 });
 
-// --- კატეგორიების ჩატვირთვა ---
+// --- კატეგორიების მართვა ---
 function loadCategories() {
     onSnapshot(collection(db, "categories"), (snap) => {
         const container = document.getElementById('category-container');
@@ -81,7 +86,7 @@ window.setCategory = (cat) => {
     window.filterProducts();
 };
 
-// --- პროდუქტების ჩატვირთვა ---
+// --- პროდუქტების მართვა ---
 function loadProducts() {
     onSnapshot(collection(db, "products"), (snap) => {
         allProducts = [];
@@ -90,13 +95,15 @@ function loadProducts() {
     });
 }
 
-// --- ფილტრაცია და ძებნა ---
 window.filterProducts = () => {
-    const search = document.getElementById('search-input').value.toLowerCase();
-    const sort = document.getElementById('sort-select').value;
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
     const grid = document.getElementById('product-grid');
+    if(!grid) return;
+
+    const search = searchInput ? searchInput.value.toLowerCase() : "";
+    const sort = sortSelect ? sortSelect.value : "default";
     
-    // ფილტრაცია კატეგორიით და ძებნით
     let filtered = allProducts.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(search);
         const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
@@ -134,17 +141,22 @@ window.filterProducts = () => {
 
 function renderPagination(total) {
     const container = document.getElementById('pagination-bottom');
-    if (!container || total <= 1) { if(container) container.innerHTML = ''; return; }
+    if (!container) return;
+    if (total <= 1) { container.innerHTML = ''; return; }
     container.innerHTML = '';
     for (let i = 1; i <= total; i++) {
-        const btnClass = i === currentPage ? 'bg-red-600 text-white' : 'text-gray-500 border-white/10';
+        const btnClass = i === currentPage ? 'bg-red-600 text-white border-red-600' : 'text-gray-500 border-white/10';
         container.innerHTML += `<button onclick="window.goToPage(${i})" class="w-12 h-12 border font-bold transition-all ${btnClass}">${i}</button>`;
     }
 }
 
-window.goToPage = (page) => { currentPage = page; window.filterProducts(); document.getElementById('shop').scrollIntoView(); };
+window.goToPage = (page) => { 
+    currentPage = page; 
+    window.filterProducts(); 
+    document.getElementById('shop').scrollIntoView({ behavior: 'smooth' }); 
+};
 
-// --- დეტალური ხედვა ---
+// --- დეტალები ---
 window.showDetails = (id) => {
     const p = allProducts.find(item => item.id === id);
     if(!p) return;
@@ -171,23 +183,21 @@ window.showDetails = (id) => {
 
 window.closeDetails = () => { document.getElementById('details-modal-overlay').style.display = 'none'; };
 
-// --- პროფილის ჩატვირთვა ---
-async function loadUserProfile(uid) {
-    const d = await getDoc(doc(db, "users", uid));
-    if(d.exists()) {
-        document.getElementById('u-phone-upd').value = d.data().phone || '';
-        document.getElementById('u-address-upd').value = d.data().address || '';
-    }
-}
-
-// --- შეკვეთის მთავარი ფუნქცია (Telegram + Firebase) ---
+// --- შეკვეთის ლოგიკა ---
 window.order = async (id, name) => {
     const user = auth.currentUser;
+
+    if(!user) {
+        window.primeShow("შეკვეთისთვის საჭიროა ავტორიზაცია!");
+        window.scrollToAuth();
+        return;
+    }
+
     const uDoc = await getDoc(doc(db, "users", user.uid));
     const data = uDoc.data();
     
     if(!data || !data.phone || !data.address) { 
-        window.primeShow("შეავსეთ პროფილი (ნომერი და მისამართი)!"); 
+        window.primeShow("გთხოვთ, შეავსოთ ტელეფონი და მისამართი პროფილში!"); 
         window.toggleProfile(); 
         return; 
     }
@@ -208,39 +218,27 @@ window.order = async (id, name) => {
 
             const botToken = '8023573505:AAFRsExFNpP2d2YpQB4nGDlB-ZEFo3u7wxE';
             const chatId = '-1003731895302';
-            const tgText = `🚀 EverPrime: ახალი შეკვეთა!\n\n📦 პროდუქტი: ${orderInfo.product}\n📞 ტელეფონი: ${orderInfo.phone}\n📧 Email: ${orderInfo.email}\n📍 მისამართი: ${orderInfo.address}\n⏰ დრო: ${orderInfo.time}`;
+            const tgText = `🚀 EverPrime: ახალი შეკვეთა!\n\n📦 პროდუქტი: ${orderInfo.product}\n📞 ტელეფონი: ${orderInfo.phone}\n📧 Email: ${orderInfo.email}\n📍 მისამართი: ${orderInfo.address}`;
             
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(tgText)}`;
-            new Image().src = url;
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(tgText)}`);
 
-            window.primeShow("შეკვეთა მიღებულია! ოპერატორი დაგიკავშირდებათ.");
+            window.primeShow("შეკვეთა გაგზავნილია! ოპერატორი მალე დაგიკავშირდებათ.");
         } catch (e) {
-            window.primeShow("შეცდომა შეკვეთისას: " + e.message);
+            window.primeShow("შეცდომა: " + e.message);
         }
     });
 };
 
-// --- ავტორიზაციის ფუნქციები ---
-window.handleLogin = async () => {
-    try { await signInWithEmailAndPassword(auth, document.getElementById('l-email').value, document.getElementById('l-pass').value); } 
-    catch(e) { window.primeShow("შეცდომა: " + e.message); }
-};
-
-window.handleRegister = async () => {
-    try {
-        const res = await createUserWithEmailAndPassword(auth, document.getElementById('r-email').value, document.getElementById('r-pass').value);
-        await setDoc(doc(db, "users", res.user.uid), { 
-            email: res.user.email, 
-            phone: document.getElementById('r-phone').value, 
-            address: document.getElementById('r-address').value, 
-            role: "user" 
-        });
-    } catch(e) { window.primeShow("შეცდომა: " + e.message); }
-};
-
-window.handleLogout = () => signOut(auth).then(() => location.reload());
-window.toggleProfile = () => document.getElementById('profile-modal').classList.toggle('hidden');
-window.toggleAuth = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); };
+// --- პროფილის და ავტორიზაციის ფუნქციები ---
+async function loadUserProfile(uid) {
+    const d = await getDoc(doc(db, "users", uid));
+    if(d.exists()) {
+        const phoneField = document.getElementById('u-phone-upd');
+        const addrField = document.getElementById('u-address-upd');
+        if(phoneField) phoneField.value = d.data().phone || '';
+        if(addrField) addrField.value = d.data().address || '';
+    }
+}
 
 window.updateProfile = async () => {
     const user = auth.currentUser;
@@ -251,5 +249,44 @@ window.updateProfile = async () => {
         }, { merge: true });
         window.primeShow("პროფილი განახლდა!");
         window.toggleProfile();
+    }
+};
+
+window.handleLogin = async () => {
+    const email = document.getElementById('l-email').value;
+    const pass = document.getElementById('l-pass').value;
+    try { 
+        await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) { window.primeShow("შეცდომა: " + e.message); }
+};
+
+window.handleRegister = async () => {
+    const email = document.getElementById('r-email').value;
+    const pass = document.getElementById('r-pass').value;
+    const phone = document.getElementById('r-phone').value;
+    const addr = document.getElementById('r-address').value;
+    
+    try {
+        const res = await createUserWithEmailAndPassword(auth, email, pass);
+        await setDoc(doc(db, "users", res.user.uid), { 
+            email: email, 
+            phone: phone, 
+            address: addr, 
+            role: "user" 
+        });
+    } catch(e) { window.primeShow("შეცდომა: " + e.message); }
+};
+
+window.handleLogout = () => signOut(auth).then(() => location.reload());
+window.toggleProfile = () => document.getElementById('profile-modal').classList.toggle('hidden');
+window.toggleAuth = () => { 
+    document.getElementById('login-form').classList.toggle('hidden'); 
+    document.getElementById('register-form').classList.toggle('hidden'); 
+};
+window.scrollToAuth = () => {
+    const authSec = document.getElementById('auth-section');
+    if(authSec) {
+        authSec.classList.remove('hidden');
+        authSec.scrollIntoView({ behavior: 'smooth' });
     }
 };
