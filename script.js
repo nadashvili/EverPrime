@@ -55,7 +55,7 @@ onAuthStateChanged(auth, async (user) => {
         if(authSec) authSec.classList.add('hidden'); // ვმალავთ ფორმას თუ შესულია
         navUser.innerHTML = `
             <button onclick="window.toggleProfile()" class="nav-btn">${user.email.split('@')[0].toUpperCase()}</button>
-            <button onclick="window.handleLogout()" class="nav-btn text-red-600">გასვლა</button>
+           
         `;
         loadUserProfile(user.uid);
     } else {
