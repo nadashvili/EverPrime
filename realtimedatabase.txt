@@ -1,7 +1,9 @@
 {
   "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
     "online_users": {
-      ".read": "true",
+      ".read": true,
       ".write": "auth != null"
     },
     "orders_live": {
@@ -10,3 +12,4 @@
     }
   }
 }
+
