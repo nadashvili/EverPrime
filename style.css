@@ -121,3 +121,29 @@ textarea:focus {
     border-color: #FF0000 !important; /* ამის ნაცვლად გამოიყენებს შენს წითელ ბორდერს */
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.3) !important; /* სურვილისამებრ: წითელი ნათება */
 }
+.cat-btn {
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #777;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-style: italic;
+    cursor: pointer;
+    transition: all 0.3s;
+    clip-path: polygon(15% 0, 100% 0, 100% 75%, 85% 100%, 0 100%, 0 25%);
+}
+
+.cat-btn:hover {
+    border-color: #FF0000;
+    color: #fff;
+    background: rgba(255, 0, 0, 0.05);
+}
+
+.cat-btn.active {
+    background: #FF0000;
+    color: #fff;
+    border-color: #FF0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
