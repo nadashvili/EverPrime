@@ -25,8 +25,9 @@
         .admin-section.active { display: block; }
         .nav-btn.active { background: #dc2626; color: white; border-color: #dc2626; }
         
-        input, textarea { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
-        input:focus, textarea:focus { border-color: #dc2626 !important; outline: none; }
+        input, textarea, select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
+        input:focus, textarea:focus, select:focus { border-color: #dc2626 !important; outline: none; }
+        option { background: #050505; color: white; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -49,16 +50,18 @@
     <nav class="flex flex-wrap gap-2 mb-10">
         <button onclick="showSection('orders-sec', this)" class="nav-btn active border border-white/10 px-4 py-2 text-[10px] uppercase font-bold transition">შეკვეთები</button>
         <button onclick="showSection('users-sec', this)" class="nav-btn border border-white/10 px-4 py-2 text-[10px] uppercase font-bold transition">მომხმარებლები</button>
-        <button onclick="showSection('upload-sec', this)" class="nav-btn border border-white/10 px-4 py-2 text-[10px] uppercase font-bold transition">ატვირთვა</button>
+        <button onclick="showSection('upload-sec', this)" class="nav-btn border border-white/10 px-4 py-2 text-[10px] uppercase font-bold transition">პროდუქტის დამატება</button>
         <button onclick="showSection('delete-sec', this)" class="nav-btn border border-white/10 px-4 py-2 text-[10px] uppercase font-bold transition">ინვენტარი</button>
     </nav>
 
     <main>
+        <!-- ORDERS SECTION -->
         <section id="orders-sec" class="admin-section active">
             <h2 class="font-sync text-xs text-red-600 mb-6 uppercase tracking-widest italic">Recent Orders</h2>
             <div id="orders-list" class="space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar"></div>
         </section>
 
+        <!-- USERS SECTION -->
         <section id="users-sec" class="admin-section">
             <div class="mb-6">
                 <input id="user-search" type="text" placeholder="მოძებნე მომხმარებელი (EMAIL, TEL)..." 
@@ -67,31 +70,54 @@
             <div id="users-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 custom-scrollbar overflow-y-auto max-h-[60vh]"></div>
         </section>
 
+        <!-- UPLOAD SECTION -->
         <section id="upload-sec" class="admin-section">
-            <div class="admin-card p-8 border-l-4 border-red-600 max-w-2xl mx-auto">
-                <h2 class="font-sync text-xs mb-8 text-white italic uppercase tracking-[0.2em]">Add New Product</h2>
-                <div class="grid grid-cols-1 gap-5">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">დასახელება</label>
-                        <input id="p-name" type="text" placeholder="მაგ: EverPrime Hoodie" class="w-full p-3 text-sm">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                <!-- PRODUCT UPLOAD -->
+                <div class="admin-card p-8 border-l-4 border-red-600">
+                    <h2 class="font-sync text-xs mb-8 text-white italic uppercase tracking-[0.2em]">Add New Product</h2>
+                    <div class="grid grid-cols-1 gap-5">
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">დასახელება</label>
+                            <input id="p-name" type="text" placeholder="მაგ: Whey Protein" class="w-full p-3 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">ფასი (₾)</label>
+                                <input id="p-price" type="number" placeholder="0.00" class="w-full p-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">კატეგორია</label>
+                                <select id="p-category" class="w-full p-3 text-sm">
+                                    <!-- Categories will be loaded here -->
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">სურათის ლინკი (URL)</label>
+                            <input id="p-image" type="text" placeholder="https://..." class="w-full p-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">აღწერა</label>
+                            <textarea id="p-desc" placeholder="პროდუქტის დეტალები..." class="w-full p-3 text-sm h-32 resize-none"></textarea>
+                        </div>
+                        <button onclick="window.uploadProduct()" class="bg-red-600 p-4 font-black uppercase italic hover:bg-red-700 transition text-white mt-4">დამატება მაღაზიაში</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">ფასი (₾)</label>
-                        <input id="p-price" type="number" placeholder="0.00" class="w-full p-3 text-sm">
+                </div>
+
+                <!-- CATEGORY MANAGEMENT -->
+                <div class="admin-card p-8 border-l-4 border-blue-600">
+                    <h2 class="font-sync text-xs mb-8 text-white italic uppercase tracking-[0.2em]">Manage Categories</h2>
+                    <div class="flex gap-2 mb-6">
+                        <input id="new-cat-name" type="text" placeholder="ახალი კატეგორია..." class="flex-1 p-3 text-sm">
+                        <button onclick="window.addCategory()" class="bg-blue-600 px-6 font-bold uppercase text-xs italic">დამატება</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">სურათის ლინკი (URL)</label>
-                        <input id="p-image" type="text" placeholder="https://..." class="w-full p-3 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">აღწერა</label>
-                        <textarea id="p-desc" placeholder="პროდუქტის დეტალები..." class="w-full p-3 text-sm h-32 resize-none"></textarea>
-                    </div>
-                    <button onclick="window.uploadProduct()" class="bg-red-600 p-4 font-black uppercase italic hover:bg-red-700 transition text-white mt-4">დამატება მაღაზიაში</button>
+                    <div id="categories-list" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar"></div>
                 </div>
             </div>
         </section>
 
+        <!-- INVENTORY SECTION -->
         <section id="delete-sec" class="admin-section">
             <h2 class="font-sync text-xs text-gray-500 mb-6 uppercase tracking-widest italic">Product Management</h2>
             <div id="inventory-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -101,7 +127,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, doc, getDoc, deleteDoc, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, doc, getDoc, deleteDoc, orderBy, addDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
         import { getDatabase, ref, onValue, onChildAdded, limitToLast, query as rQuery } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -121,66 +147,132 @@
 
         let allUsers = [];
 
-        function triggerAlarm(data) {
-            const overlay = document.getElementById('alarm-overlay');
-            const details = document.getElementById('alarm-details');
-            if (!overlay || !details) return;
-            details.innerHTML = `<p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p><p class="text-green-500 font-mono italic">მისამართი: ${data.address || 'N/A'}</p><p class="text-white/50 text-xs mt-2 uppercase">ტელეფონი: ${data.phone || 'N/A'}</p>`;
-            overlay.classList.add('active');
-            // ხმოვანი შეტყობინების დამატებაც შეიძლება აქ
-        }
+        window.showSection = (id, btn) => {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+        };
+
+        window.delDoc = async (coll, id) => {
+            if(confirm(`წავშალოთ ჩანაწერი ${coll}-დან?`)) {
+                try { await deleteDoc(doc(db, coll, id)); } catch (e) { alert(e.message); }
+            }
+        };
+
+        // --- PRODUCT UPLOAD ---
+        window.uploadProduct = async () => {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const image = document.getElementById('p-image').value;
+            const desc = document.getElementById('p-desc').value;
+            const category = document.getElementById('p-category').value;
+            
+            if(!name || !price || !category) return alert("შეავსეთ სახელი, ფასი და კატეგორია!");
+            
+            try {
+                await addDoc(collection(db, "products"), { 
+                    name, price: Number(price), image, desc, category, createdAt: Date.now() 
+                });
+                alert("პროდუქტი დაემატა!");
+                ['p-name', 'p-price', 'p-image', 'p-desc'].forEach(id => document.getElementById(id).value = '');
+            } catch (e) { alert(e.message); }
+        };
+
+        // --- CATEGORY LOGIC ---
+        window.addCategory = async () => {
+            const name = document.getElementById('new-cat-name').value.trim();
+            if(!name) return;
+            try {
+                await addDoc(collection(db, "categories"), { name });
+                document.getElementById('new-cat-name').value = '';
+            } catch (e) { alert(e.message); }
+        };
 
         function loadAdminData() {
-            // Live Realtime Monitoring (მხოლოდ განგაშისთვის)
-            onChildAdded(rQuery(ref(rtdb, 'orders_live'), limitToLast(1)), (snap) => {
-                const order = snap.val();
-                if (order.timestamp && (Date.now() - order.timestamp < 15000)) {
-                    triggerAlarm(order);
-                }
+            // Live Categories
+            onSnapshot(collection(db, "categories"), snap => {
+                const select = document.getElementById('p-category');
+                const list = document.getElementById('categories-list');
+                select.innerHTML = '';
+                list.innerHTML = '';
+                snap.forEach(d => {
+                    const cat = d.data().name;
+                    select.innerHTML += `<option value="${cat}">${cat}</option>`;
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-2 bg-white/5 border border-white/5">
+                            <span class="text-xs uppercase">${cat}</span>
+                            <button onclick="window.delDoc('categories', '${d.id}')" class="text-red-600 material-icons text-sm">delete</button>
+                        </div>`;
+                });
             });
 
-            // Orders List
+            // Live Orders
             onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), snap => {
                 const list = document.getElementById('orders-list');
                 list.innerHTML = '';
                 snap.forEach(d => {
                     const o = d.data();
-                    list.innerHTML += `<div class="p-4 bg-white/5 border-l-4 border-red-600 mb-2 flex justify-between items-center group">
-                        <div>
-                            <p class="text-white font-bold uppercase text-sm">${o.product}</p>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-tighter">${o.address || 'მისამართი არაა'} | ${o.phone || 'ნომერი არაა'}</p>
-                        </div>
-                        <button onclick="window.delDoc('orders', '${d.id}')" class="text-gray-700 hover:text-red-600 transition"><span class="material-icons">delete</span></button>
-                    </div>`;
+                    list.innerHTML += `
+                        <div class="p-4 bg-white/5 border-l-4 border-red-600 mb-2 flex justify-between items-center group">
+                            <div>
+                                <p class="text-white font-bold uppercase text-sm">${o.product}</p>
+                                <p class="text-[10px] text-gray-500 uppercase">${o.address || 'N/A'} | ${o.phone || 'N/A'}</p>
+                                <p class="text-[9px] text-gray-700">${o.email} | ${o.time}</p>
+                            </div>
+                            <button onclick="window.delDoc('orders', '${d.id}')" class="text-gray-700 hover:text-red-600 transition">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>`;
                 });
             });
 
-            // Users List
-            onSnapshot(collection(db, "users"), snap => {
-                allUsers = [];
-                snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
-                renderUsers(allUsers);
-            });
-
-            // Inventory List
+            // Live Inventory
             onSnapshot(collection(db, "products"), snap => {
                 const list = document.getElementById('inventory-list');
                 list.innerHTML = '';
                 snap.forEach(d => {
                     const p = d.data();
-                    list.innerHTML += `<div class="admin-card p-4 flex justify-between items-center border border-white/5">
-                        <div class="flex items-center gap-3">
-                            <img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover border border-white/10">
-                            <div><p class="text-xs font-bold text-white uppercase">${p.name}</p><p class="text-[10px] text-red-500">${p.price}₾</p></div>
-                        </div>
-                        <button onclick="window.delDoc('products', '${d.id}')" class="text-[10px] text-red-600 font-black hover:underline uppercase">წაშლა</button>
-                    </div>`;
+                    list.innerHTML += `
+                        <div class="admin-card p-4 flex justify-between items-center border border-white/5">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.image || ''}" class="w-10 h-10 object-cover border border-white/10">
+                                <div>
+                                    <p class="text-xs font-bold text-white uppercase">${p.name}</p>
+                                    <p class="text-[10px] text-red-500">${p.category} | ${p.price}₾</p>
+                                </div>
+                            </div>
+                            <button onclick="window.delDoc('products', '${d.id}')" class="text-[10px] text-red-600 font-black hover:underline uppercase">წაშლა</button>
+                        </div>`;
                 });
+            });
+
+            // Alarm & Stats
+            onChildAdded(rQuery(ref(rtdb, 'orders_live'), limitToLast(1)), (snap) => {
+                const order = snap.val();
+                if (order && (Date.now() - order.timestamp < 10000)) triggerAlarm(order);
             });
 
             onValue(ref(rtdb, 'online_users'), s => {
                 document.getElementById('user-stats').innerHTML = `● LIVE USERS: ${s.exists() ? Object.keys(s.val()).length : 0}`;
             });
+
+            onSnapshot(collection(db, "users"), snap => {
+                allUsers = [];
+                snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
+                renderUsers(allUsers);
+            });
+        }
+
+        function triggerAlarm(data) {
+            const overlay = document.getElementById('alarm-overlay');
+            document.getElementById('alarm-details').innerHTML = `
+                <p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p>
+                <p class="text-green-500 font-mono italic">მისამართი: ${data.address}</p>
+                <p class="text-white/50 text-xs mt-2 uppercase">ტელეფონი: ${data.phone}</p>
+            `;
+            overlay.classList.add('active');
+            new Audio('https://assets.mixkit.co/sfx/preview/mixkit-emergency-alert-alarm-1007.mp3').play();
         }
 
         function renderUsers(usersArray) {
@@ -190,17 +282,19 @@
                 if(u.role === 'admin') return;
                 list.innerHTML += `
                     <div class="admin-card p-4 border-t-2 border-blue-600 relative">
-                        <h4 class="text-white font-bold text-xs truncate mb-1">${u.email || 'No Email'}</h4>
-                        <p class="text-[10px] text-gray-500 font-mono italic">${u.phone || 'ნომერი არაა'}</p>
-                        <p class="text-[9px] text-gray-600 mt-2 uppercase truncate">${u.address || 'მისამართი არაა'}</p>
-                        <button onclick="window.delDoc('users', '${u.id}')" class="absolute top-4 right-4 text-gray-800 hover:text-red-600"><span class="material-icons text-sm">person_remove</span></button>
+                        <h4 class="text-white font-bold text-xs truncate mb-1">${u.email}</h4>
+                        <p class="text-[10px] text-gray-500 font-mono italic">${u.phone || 'N/A'}</p>
+                        <p class="text-[9px] text-gray-600 mt-2 uppercase truncate">${u.address || 'N/A'}</p>
+                        <button onclick="window.delDoc('users', '${u.id}')" class="absolute top-4 right-4 text-gray-800 hover:text-red-600">
+                            <span class="material-icons text-sm">person_remove</span>
+                        </button>
                     </div>`;
             });
         }
 
         document.getElementById('user-search').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase();
-            renderUsers(allUsers.filter(u => (u.email?.toLowerCase().includes(val)) || (u.phone?.includes(val))));
+            renderUsers(allUsers.filter(u => u.email?.toLowerCase().includes(val) || u.phone?.includes(val)));
         });
 
         onAuthStateChanged(auth, async (user) => {
@@ -210,34 +304,6 @@
                 else window.location.href = "index.html";
             } else window.location.href = "index.html";
         });
-
-        window.delDoc = async (coll, id) => {
-            if(confirm(`წავშალოთ ჩანაწერი ${coll}-დან?`)) await deleteDoc(doc(db, coll, id));
-        };
-
-        window.uploadProduct = async () => {
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const img = document.getElementById('p-img').value;
-            const desc = document.getElementById('p-desc').value;
-            
-            if(!name || !price) return alert("სახელი და ფასი აუცილებელია!");
-            
-            await addDoc(collection(db, "products"), { 
-                name, price, img, desc, 
-                createdAt: Date.now() 
-            });
-            
-            alert("პროდუქტი წარმატებით დაემატა!");
-            ['p-name', 'p-price', 'p-img', 'p-desc'].forEach(id => document.getElementById(id).value = '');
-        };
-
-        window.showSection = (id, btn) => {
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        };
     </script>
 </body>
 </html>
