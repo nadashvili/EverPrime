@@ -241,7 +241,7 @@ window.order = async (id, name) => {
 
             const botToken = '8023573505:AAFRsExFNpP2d2YpQB4nGDlB-ZEFo3u7wxE';
             const chatId = '-1003731895302';
-            const tgText = `🚀 EverPrime: ახალი შეკვეთა!\n\n📦 პროდუქტი: ${orderInfo.product}\n📞 ტელეფონი: ${orderInfo.phone}\n📧 Email: ${orderInfo.email}\n📍 მისამართი: ${orderInfo.address}`;
+            const tgText = `🚀 EverPrime : ახალი შეკვეთა!\n\n📦 პროდუქტი: ${orderInfo.product}\n📞 ტელეფონი: ${orderInfo.phone}\n📧 Email: ${orderInfo.email}\n📍 მისამართი: ${orderInfo.address}`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(tgText)}`);
 
