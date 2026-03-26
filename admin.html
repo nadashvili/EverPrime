@@ -32,6 +32,7 @@
 </head>
 <body class="p-4 md:p-10">
 
+    <!-- Alarm Overlay for New Orders -->
     <div id="alarm-overlay" class="fixed inset-0 z-[9999] flex-col items-center justify-center text-center p-6 backdrop-blur-xl">
         <div class="mb-6 animate-bounce"><span class="material-icons text-9xl text-white">warning</span></div>
         <h2 class="font-sync text-5xl md:text-7xl font-black italic mb-8 text-white uppercase tracking-tighter">New Order</h2>
@@ -42,7 +43,7 @@
     <header class="flex flex-col md:flex-row justify-between items-center border-b border-red-600 pb-8 mb-8 gap-6">
         <div>
             <h1 class="font-sync text-3xl font-black italic uppercase tracking-tighter">Ever<span class="text-red-600">Prime</span></h1>
-            <p class="text-[10px] uppercase tracking-[0.5em] opacity-50">Control Center v2.5</p>
+            <p class="text-[10px] uppercase tracking-[0.5em] opacity-50">Control Center v2.6</p>
         </div>
         <div id="user-stats" class="text-green-500 text-xs font-bold uppercase italic animate-pulse">კავშირი...</div>
     </header>
@@ -73,7 +74,6 @@
         <!-- UPLOAD SECTION -->
         <section id="upload-sec" class="admin-section">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                <!-- PRODUCT UPLOAD -->
                 <div class="admin-card p-8 border-l-4 border-red-600">
                     <h2 class="font-sync text-xs mb-8 text-white italic uppercase tracking-[0.2em]">Add New Product</h2>
                     <div class="grid grid-cols-1 gap-5">
@@ -88,9 +88,7 @@
                             </div>
                             <div>
                                 <label class="text-[10px] text-gray-500 uppercase font-bold block mb-2">კატეგორია</label>
-                                <select id="p-category" class="w-full p-3 text-sm">
-                                    <!-- Categories will be loaded here -->
-                                </select>
+                                <select id="p-category" class="w-full p-3 text-sm"></select>
                             </div>
                         </div>
                         <div>
@@ -105,7 +103,6 @@
                     </div>
                 </div>
 
-                <!-- CATEGORY MANAGEMENT -->
                 <div class="admin-card p-8 border-l-4 border-blue-600">
                     <h2 class="font-sync text-xs mb-8 text-white italic uppercase tracking-[0.2em]">Manage Categories</h2>
                     <div class="flex gap-2 mb-6">
@@ -119,7 +116,7 @@
 
         <!-- INVENTORY SECTION -->
         <section id="delete-sec" class="admin-section">
-            <h2 class="font-sync text-xs text-gray-500 mb-6 uppercase tracking-widest italic">Product Management</h2>
+            <h2 class="font-sync text-xs text-gray-500 mb-6 uppercase tracking-widest italic">Inventory & Stock Status</h2>
             <div id="inventory-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
     </main>
@@ -155,12 +152,12 @@
         };
 
         window.delDoc = async (coll, id) => {
-            if(confirm(`წავშალოთ ჩანაწერი ${coll}-დან?`)) {
+            if(confirm(`ნამდვილად გსურთ წაშლა?`)) {
                 try { await deleteDoc(doc(db, coll, id)); } catch (e) { alert(e.message); }
             }
         };
 
-        // --- PRODUCT UPLOAD ---
+        // --- PRODUCT UPLOAD WITH STOCK ---
         window.uploadProduct = async () => {
             const name = document.getElementById('p-name').value;
             const price = document.getElementById('p-price').value;
@@ -168,46 +165,44 @@
             const desc = document.getElementById('p-desc').value;
             const category = document.getElementById('p-category').value;
             
-            if(!name || !price || !category) return alert("შეავსეთ სახელი, ფასი და კატეგორია!");
+            if(!name || !price || !category) return alert("შეავსეთ აუცილებელი ველები!");
             
             try {
                 await addDoc(collection(db, "products"), { 
-                    name, price: Number(price), image, desc, category, createdAt: Date.now() 
+                    name, price: Number(price), image, desc, category, 
+                    inStock: true, // Default status
+                    createdAt: Date.now() 
                 });
-                alert("პროდუქტი დაემატა!");
+                alert("პროდუქტი წარმატებით დაემატა!");
                 ['p-name', 'p-price', 'p-image', 'p-desc'].forEach(id => document.getElementById(id).value = '');
             } catch (e) { alert(e.message); }
         };
 
-        // --- CATEGORY LOGIC ---
+        // --- TOGGLE STOCK STATUS ---
+        window.toggleStock = async (id, currentStatus) => {
+            try {
+                await setDoc(doc(db, "products", id), { inStock: !currentStatus }, { merge: true });
+            } catch (e) { console.error("Error updating stock:", e); }
+        };
+
         window.addCategory = async () => {
             const name = document.getElementById('new-cat-name').value.trim();
             if(!name) return;
-            try {
-                await addDoc(collection(db, "categories"), { name });
-                document.getElementById('new-cat-name').value = '';
-            } catch (e) { alert(e.message); }
+            try { await addDoc(collection(db, "categories"), { name }); document.getElementById('new-cat-name').value = ''; } catch (e) { alert(e.message); }
         };
 
         function loadAdminData() {
-            // Live Categories
             onSnapshot(collection(db, "categories"), snap => {
                 const select = document.getElementById('p-category');
                 const list = document.getElementById('categories-list');
-                select.innerHTML = '';
-                list.innerHTML = '';
+                select.innerHTML = ''; list.innerHTML = '';
                 snap.forEach(d => {
                     const cat = d.data().name;
                     select.innerHTML += `<option value="${cat}">${cat}</option>`;
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-2 bg-white/5 border border-white/5">
-                            <span class="text-xs uppercase">${cat}</span>
-                            <button onclick="window.delDoc('categories', '${d.id}')" class="text-red-600 material-icons text-sm">delete</button>
-                        </div>`;
+                    list.innerHTML += `<div class="flex justify-between items-center p-2 bg-white/5 border border-white/5"><span class="text-xs uppercase">${cat}</span><button onclick="window.delDoc('categories', '${d.id}')" class="text-red-600 material-icons text-sm">delete</button></div>`;
                 });
             });
 
-            // Live Orders
             onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), snap => {
                 const list = document.getElementById('orders-list');
                 list.innerHTML = '';
@@ -215,39 +210,36 @@
                     const o = d.data();
                     list.innerHTML += `
                         <div class="p-4 bg-white/5 border-l-4 border-red-600 mb-2 flex justify-between items-center group">
-                            <div>
-                                <p class="text-white font-bold uppercase text-sm">${o.product}</p>
-                                <p class="text-[10px] text-gray-500 uppercase">${o.address || 'N/A'} | ${o.phone || 'N/A'}</p>
-                                <p class="text-[9px] text-gray-700">${o.email} | ${o.time}</p>
-                            </div>
-                            <button onclick="window.delDoc('orders', '${d.id}')" class="text-gray-700 hover:text-red-600 transition">
-                                <span class="material-icons">delete</span>
-                            </button>
+                            <div><p class="text-white font-bold uppercase text-sm">${o.product}</p><p class="text-[10px] text-gray-500 uppercase">${o.address || 'N/A'} | ${o.phone || 'N/A'}</p></div>
+                            <button onclick="window.delDoc('orders', '${d.id}')" class="text-gray-700 hover:text-red-600 transition"><span class="material-icons">delete</span></button>
                         </div>`;
                 });
             });
 
-            // Live Inventory
+            // UPDATED INVENTORY WITH STOCK TOGGLE
             onSnapshot(collection(db, "products"), snap => {
                 const list = document.getElementById('inventory-list');
                 list.innerHTML = '';
                 snap.forEach(d => {
                     const p = d.data();
+                    const inStock = p.inStock !== false;
                     list.innerHTML += `
-                        <div class="admin-card p-4 flex justify-between items-center border border-white/5">
-                            <div class="flex items-center gap-3">
-                                <img src="${p.image || ''}" class="w-10 h-10 object-cover border border-white/10">
-                                <div>
-                                    <p class="text-xs font-bold text-white uppercase">${p.name}</p>
-                                    <p class="text-[10px] text-red-500">${p.category} | ${p.price}₾</p>
+                        <div class="admin-card p-4 flex flex-col gap-3 border border-white/5">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <img src="${p.image || ''}" class="w-10 h-10 object-cover border border-white/10">
+                                    <div><p class="text-xs font-bold text-white uppercase">${p.name}</p><p class="text-[10px] text-red-500">${p.price}₾</p></div>
                                 </div>
+                                <button onclick="window.delDoc('products', '${d.id}')" class="text-red-600 material-icons text-sm opacity-50 hover:opacity-100">delete</button>
                             </div>
-                            <button onclick="window.delDoc('products', '${d.id}')" class="text-[10px] text-red-600 font-black hover:underline uppercase">წაშლა</button>
+                            <button onclick="window.toggleStock('${d.id}', ${inStock})" 
+                                class="w-full py-2 text-[9px] font-bold uppercase border transition-all ${inStock ? 'border-green-500 text-green-500 hover:bg-green-500/10' : 'border-gray-600 text-gray-600 hover:bg-gray-600/10'}">
+                                ${inStock ? '● მარაგშია' : '○ ამოწურულია'}
+                            </button>
                         </div>`;
                 });
             });
 
-            // Alarm & Stats
             onChildAdded(rQuery(ref(rtdb, 'orders_live'), limitToLast(1)), (snap) => {
                 const order = snap.val();
                 if (order && (Date.now() - order.timestamp < 10000)) triggerAlarm(order);
@@ -266,11 +258,7 @@
 
         function triggerAlarm(data) {
             const overlay = document.getElementById('alarm-overlay');
-            document.getElementById('alarm-details').innerHTML = `
-                <p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p>
-                <p class="text-green-500 font-mono italic">მისამართი: ${data.address}</p>
-                <p class="text-white/50 text-xs mt-2 uppercase">ტელეფონი: ${data.phone}</p>
-            `;
+            document.getElementById('alarm-details').innerHTML = `<p class="text-white text-xl uppercase font-bold">პროდუქტი: ${data.product}</p><p class="text-green-500 font-mono italic">მისამართი: ${data.address}</p>`;
             overlay.classList.add('active');
             new Audio('https://assets.mixkit.co/sfx/preview/mixkit-emergency-alert-alarm-1007.mp3').play();
         }
@@ -280,15 +268,7 @@
             list.innerHTML = '';
             usersArray.forEach(u => {
                 if(u.role === 'admin') return;
-                list.innerHTML += `
-                    <div class="admin-card p-4 border-t-2 border-blue-600 relative">
-                        <h4 class="text-white font-bold text-xs truncate mb-1">${u.email}</h4>
-                        <p class="text-[10px] text-gray-500 font-mono italic">${u.phone || 'N/A'}</p>
-                        <p class="text-[9px] text-gray-600 mt-2 uppercase truncate">${u.address || 'N/A'}</p>
-                        <button onclick="window.delDoc('users', '${u.id}')" class="absolute top-4 right-4 text-gray-800 hover:text-red-600">
-                            <span class="material-icons text-sm">person_remove</span>
-                        </button>
-                    </div>`;
+                list.innerHTML += `<div class="admin-card p-4 border-t-2 border-blue-600 relative"><h4 class="text-white font-bold text-xs truncate mb-1">${u.email}</h4><p class="text-[10px] text-gray-500 font-mono italic">${u.phone || 'N/A'}</p><button onclick="window.delDoc('users', '${u.id}')" class="absolute top-4 right-4 text-gray-800 hover:text-red-600"><span class="material-icons text-sm">person_remove</span></button></div>`;
             });
         }
 
