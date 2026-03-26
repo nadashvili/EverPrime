@@ -43,7 +43,6 @@ onAuthStateChanged(auth, async (user) => {
     const authSec = document.getElementById('auth-section');
     const navUser = document.getElementById('nav-user-area');
     
-    // პროდუქტები და კატეგორიები იტვირთება ყოველთვის
     loadProducts();
     loadCategories();
 
@@ -52,14 +51,13 @@ onAuthStateChanged(auth, async (user) => {
         set(userStatusRef, { email: user.email, last_active: Date.now() });
         onDisconnect(userStatusRef).remove();
         
-        if(authSec) authSec.classList.add('hidden'); // ვმალავთ ფორმას თუ შესულია
+        if(authSec) authSec.classList.add('hidden');
         navUser.innerHTML = `
             <button onclick="window.toggleProfile()" class="nav-btn">${user.email.split('@')[0].toUpperCase()}</button>
-           
         `;
         loadUserProfile(user.uid);
     } else {
-        if(authSec) authSec.classList.remove('hidden'); // ვაჩვენებთ ფორმას თუ გამოსულია
+        if(authSec) authSec.classList.remove('hidden');
         navUser.innerHTML = `<button onclick="window.scrollToAuth()" class="nav-btn">შესვლა</button>`;
     }
 });
@@ -120,13 +118,19 @@ window.filterProducts = () => {
     
     grid.innerHTML = '';
     paginated.forEach(p => {
-        // დავამატეთ 'flex flex-col' და 'h-full' მთავარ დივზე
+        // მარაგის შემოწმება (თუ ველი არ არსებობს, ვთვლით რომ არის)
+        const inStock = p.inStock !== false;
+
         grid.innerHTML += `
-            <div class="product-card group reveal-up flex flex-col h-full">
-                <!-- flex-grow აიძულებს ამ ნაწილს შეავსოს თავისუფალი ადგილი -->
+            <div class="product-card group reveal-up flex flex-col h-full ${!inStock ? 'opacity-80' : ''}">
                 <div class="flex-grow">
-                    <div class="h-55 w-full flex items-center justify-center bg-black/40 mb-6 border border-white/5 overflow-hidden ">
-                        <img src="${p.image || ''}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-500">
+                    <div class="relative h-55 w-full flex items-center justify-center bg-black/40 mb-6 border border-white/5 overflow-hidden ">
+                        <!-- Stock Badge -->
+                        <span class="absolute top-2 left-2 px-2 py-1 text-[8px] font-bold uppercase tracking-widest z-10 ${inStock ? 'bg-green-600' : 'bg-red-600'}">
+                            ${inStock ? 'მარაგშია' : 'ამოწურულია'}
+                        </span>
+                        
+                        <img src="${p.image || ''}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-500 ${!inStock ? 'grayscale' : ''}">
                     </div>
                     <div class="flex justify-between items-center mb-4">
                         <div>
@@ -137,10 +141,14 @@ window.filterProducts = () => {
                     </div>
                 </div>
                 
-                <!-- mt-auto დამატებით აზღვევს, რომ ეს ბლოკი ყოველთვის ბოლოში იყოს -->
                 <div class="mt-auto flex flex-col gap-1">
                     <button onclick="window.showDetails('${p.id}')" class="details-btn">დეტალები</button>
-                    <button onclick="window.order('${p.id}', '${p.name}')" class="buy-btn">შეკვეთა</button>
+                    
+                    <!-- Buy Button Logic -->
+                    <button ${inStock ? `onclick="window.order('${p.id}', '${p.name}')"` : 'disabled'} 
+                        class="buy-btn ${!inStock ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-50' : ''}">
+                        ${inStock ? 'შეკვეთა' : 'არ არის მარაგში'}
+                    </button>
                 </div>
             </div>`;
     });
@@ -168,12 +176,16 @@ window.goToPage = (page) => {
 window.showDetails = (id) => {
     const p = allProducts.find(item => item.id === id);
     if(!p) return;
+    const inStock = p.inStock !== false;
     const modal = document.getElementById('details-modal-overlay');
     const content = document.getElementById('details-content');
     content.innerHTML = `
         <div class="flex flex-col gap-6">
-            <div class="w-full flex items-center justify-center bg-black/50 p-4 border border-white/5">
-                <img src="${p.image || ''}" class="max-h-56 object-contain shadow-2xl shadow-red-600/20">
+            <div class="w-full flex items-center justify-center bg-black/50 p-4 border border-white/5 relative">
+                <span class="absolute top-4 left-4 px-2 py-1 text-[8px] font-bold uppercase tracking-widest z-10 ${inStock ? 'bg-green-600' : 'bg-red-600'}">
+                    ${inStock ? 'მარაგშია' : 'ამოწურულია'}
+                </span>
+                <img src="${p.image || ''}" class="max-h-56 object-contain shadow-2xl shadow-red-600/20 ${!inStock ? 'grayscale' : ''}">
             </div>
             <div class="w-full text-left">
                 <p class="text-red-600 text-[10px] font-bold uppercase mb-1">${p.category || 'ზოგადი'}</p>
@@ -181,7 +193,10 @@ window.showDetails = (id) => {
                 <div class="text-white font-bold text-lg mb-4 tracking-tighter">${p.price}₾</div>
                 <p class="text-gray-400 text-[12px] md:text-xs leading-relaxed uppercase whitespace-pre-line mb-5 bg-white/5 p-3 border-l border-red-600">${p.desc || 'აღწერა არ არის'}</p>
                 <div class="flex flex-col gap-3">
-                    <button onclick="window.order('${p.id}', '${p.name}'); window.closeDetails()" class="buy-btn">შეკვეთა</button>
+                    <button ${inStock ? `onclick="window.order('${p.id}', '${p.name}'); window.closeDetails()"` : 'disabled'} 
+                        class="buy-btn ${!inStock ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-50' : ''}">
+                        ${inStock ? 'შეკვეთა' : 'არ არის მარაგში'}
+                    </button>
                     <button onclick="window.closeDetails()" class="w-full py-2 text-[15px] text-red-500 hover:text-white uppercase font-bold tracking-widest transition">დახურვა</button>
                 </div>
             </div>
