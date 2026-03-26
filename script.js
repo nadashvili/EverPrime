@@ -120,20 +120,28 @@ window.filterProducts = () => {
     
     grid.innerHTML = '';
     paginated.forEach(p => {
+        // დავამატეთ 'flex flex-col' და 'h-full' მთავარ დივზე
         grid.innerHTML += `
-            <div class="product-card group reveal-up">
-                <div class="h-55 w-full flex items-center justify-center bg-black/40 mb-6 border border-white/5 overflow-hidden ">
-                    <img src="${p.image || ''}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-500">
-                </div>
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="font-sync text-[16px] font-bold uppercase italic">${p.name}</h3>
-                        <p class="text-[9px] text-gray-500 uppercase">${p.category || ''}</p>
+            <div class="product-card group reveal-up flex flex-col h-full">
+                <!-- flex-grow აიძულებს ამ ნაწილს შეავსოს თავისუფალი ადგილი -->
+                <div class="flex-grow">
+                    <div class="h-55 w-full flex items-center justify-center bg-black/40 mb-6 border border-white/5 overflow-hidden ">
+                        <img src="${p.image || ''}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-500">
                     </div>
-                    <span class="text-red-600 font-bold tracking-tighter">${p.price}₾</span>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-sync text-[12px] font-bold uppercase italic">${p.name}</h3>
+                            <p class="text-[9px] text-gray-500 uppercase">${p.category || ''}</p>
+                        </div>
+                        <span class="text-red-600 font-bold tracking-tighter">${p.price}₾</span>
+                    </div>
                 </div>
-                <button onclick="window.showDetails('${p.id}')" class="details-btn">დეტალები</button>
-                <button onclick="window.order('${p.id}', '${p.name}')" class="buy-btn">შეკვეთა</button>
+                
+                <!-- mt-auto დამატებით აზღვევს, რომ ეს ბლოკი ყოველთვის ბოლოში იყოს -->
+                <div class="mt-auto flex flex-col gap-1">
+                    <button onclick="window.showDetails('${p.id}')" class="details-btn">დეტალები</button>
+                    <button onclick="window.order('${p.id}', '${p.name}')" class="buy-btn">შეკვეთა</button>
+                </div>
             </div>`;
     });
     renderPagination(totalPages);
